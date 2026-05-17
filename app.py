@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime
 import matplotlib.pyplot as plt
 
 @st.cache_resource
@@ -112,23 +112,14 @@ def main():
             st.plotly_chart(fig_hist)
             
             # Feature engineering and prediction
-            # with st.spinner("Processing features and making predictions..."):
-            #     features = feature_engineering(df)
-            #     st.session_state.features = features
+            with st.spinner("Processing features and making predictions..."):
+                features = feature_engineering(df)
+                st.session_state.features = features
                 
-            #     # Adjustable threshold slider
-            #     threshold = st.slider(
-            #         "Adjust Fake User Probability Threshold",
-            #         min_value=0.0,
-            #         max_value=1.0,
-            #         value=0.5,
-            #         step=0.01,
-            #         help="Set threshold to classify fake users (default 0.5)"
-            #     )
-                
-            #     X_scaled = scaler.transform(features)
-            #     pred_proba = model.predict_proba(X_scaled)[:, 1]
-            #     predictions = (pred_proba >= threshold).astype(int)
+                X_scaled = scaler.transform(features)
+                pred_proba = model.predict_proba(X_scaled)[:, 1]
+                # Default classification threshold fixed to 0.5
+                predictions = (pred_proba >= 0.5).astype(int)
             
             # Prepare results
             results_df = features.copy()
@@ -158,17 +149,9 @@ def main():
             ax.set_title("Feature Importance from Model")
             st.pyplot(fig)
             
-            # User filtering for detailed results
-            st.subheader("Detailed Results with Filtering")
-            
-            # Filters
-            # user_filter = st.text_input("Filter by User (substring match):", "")
-            # prob_filter = st.slider("Minimum Fake Probability:", 0.0, 1.0, 0.0, 0.01)
-            # filtered_df = results_df[
-            #     (results_df.index.str.contains(user_filter)) &
-            #     (results_df['Fake_Probability'] >= prob_filter)
-            # ]
-            # st.dataframe(filtered_df.sort_values('Fake_Probability', ascending=False))
+            # Global detailed results view
+            st.subheader("Detailed Breakdown")
+            st.dataframe(results_df.sort_values('Fake_Probability', ascending=False))
             
             # Download results
             csv = results_df.to_csv(index=True)
