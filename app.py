@@ -162,13 +162,13 @@ def main():
             st.subheader("Detailed Results with Filtering")
             
             # Filters
-            user_filter = st.text_input("Filter by User (substring match):", "")
-            prob_filter = st.slider("Minimum Fake Probability:", 0.0, 1.0, 0.0, 0.01)
-            filtered_df = results_df[
-                (results_df.index.str.contains(user_filter)) &
-                (results_df['Fake_Probability'] >= prob_filter)
-            ]
-            st.dataframe(filtered_df.sort_values('Fake_Probability', ascending=False))
+            # user_filter = st.text_input("Filter by User (substring match):", "")
+            # prob_filter = st.slider("Minimum Fake Probability:", 0.0, 1.0, 0.0, 0.01)
+            # filtered_df = results_df[
+            #     (results_df.index.str.contains(user_filter)) &
+            #     (results_df['Fake_Probability'] >= prob_filter)
+            # ]
+            # st.dataframe(filtered_df.sort_values('Fake_Probability', ascending=False))
             
             # Download results
             csv = results_df.to_csv(index=True)
