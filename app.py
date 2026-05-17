@@ -11,6 +11,15 @@ def load_model_scaler():
     try:
         model = joblib.load('fake_user_rf_model.pkl')
         scaler = joblib.load('fake_user_scaler.pkl')
+        
+        # --- ADD THIS PATCH HERE ---
+        # Inject the missing attribute into the underlying trees if it doesn't exist
+        if hasattr(model, 'estimators_'):
+            for estimator in model.estimators_:
+                if not hasattr(estimator, 'monotonic_cst'):
+                    estimator.monotonic_cst = None
+        # ---------------------------
+        
         return model, scaler
     except FileNotFoundError as e:
         st.error(f"Model files not found: {e}")
