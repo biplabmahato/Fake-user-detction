@@ -112,23 +112,23 @@ def main():
             st.plotly_chart(fig_hist)
             
             # Feature engineering and prediction
-            with st.spinner("Processing features and making predictions..."):
-                features = feature_engineering(df)
-                st.session_state.features = features
+            # with st.spinner("Processing features and making predictions..."):
+            #     features = feature_engineering(df)
+            #     st.session_state.features = features
                 
-                # Adjustable threshold slider
-                threshold = st.slider(
-                    "Adjust Fake User Probability Threshold",
-                    min_value=0.0,
-                    max_value=1.0,
-                    value=0.5,
-                    step=0.01,
-                    help="Set threshold to classify fake users (default 0.5)"
-                )
+            #     # Adjustable threshold slider
+            #     threshold = st.slider(
+            #         "Adjust Fake User Probability Threshold",
+            #         min_value=0.0,
+            #         max_value=1.0,
+            #         value=0.5,
+            #         step=0.01,
+            #         help="Set threshold to classify fake users (default 0.5)"
+            #     )
                 
-                X_scaled = scaler.transform(features)
-                pred_proba = model.predict_proba(X_scaled)[:, 1]
-                predictions = (pred_proba >= threshold).astype(int)
+            #     X_scaled = scaler.transform(features)
+            #     pred_proba = model.predict_proba(X_scaled)[:, 1]
+            #     predictions = (pred_proba >= threshold).astype(int)
             
             # Prepare results
             results_df = features.copy()
