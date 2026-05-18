@@ -12,13 +12,11 @@ def load_model_scaler():
         model = joblib.load('fake_user_rf_model.pkl')
         scaler = joblib.load('fake_user_scaler.pkl')
         
-        # --- ADD THIS PATCH HERE ---
-        # Inject the missing attribute into the underlying trees if it doesn't exist
+        # --- scikit-learn Version Mismatch Patch ---
         if hasattr(model, 'estimators_'):
             for estimator in model.estimators_:
                 if not hasattr(estimator, 'monotonic_cst'):
                     estimator.monotonic_cst = None
-        # ---------------------------
         
         return model, scaler
     except FileNotFoundError as e:
@@ -27,8 +25,9 @@ def load_model_scaler():
         return None, None
 
 
-def feature_engineering(df):
-    """Same feature engineering as training"""
+def feature_engineering(df_input):
+    """Same feature engineering as training - operating on a local copy"""
+    df = df_input.copy()  # Protect original data from mutation
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     user_groups = df.groupby('user')
     
@@ -97,11 +96,13 @@ def main():
     
     if uploaded_file is not None:
         try:
+            # Fixed session state caching using strict deep reference separation (.copy())
             if "df_data" not in st.session_state:
-                df = pd.read_csv(uploaded_file)
-                st.session_state.df_data = df
+                df_raw = pd.read_csv(uploaded_file)
+                st.session_state.df_data = df_raw.copy()
+                df = df_raw.copy()
             else:
-                df = st.session_state.df_data
+                df = st.session_state.df_data.copy()
             
             st.subheader("Data Preview")
             st.dataframe(df.head())
@@ -123,11 +124,10 @@ def main():
             # Feature engineering and prediction
             with st.spinner("Processing features and making predictions..."):
                 features = feature_engineering(df)
-                st.session_state.features = features
+                st.session_state.features = features.copy()
                 
                 X_scaled = scaler.transform(features)
                 pred_proba = model.predict_proba(X_scaled)[:, 1]
-                # Default classification threshold fixed to 0.5
                 predictions = (pred_proba >= 0.5).astype(int)
             
             # Prepare results
