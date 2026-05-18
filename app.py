@@ -27,7 +27,7 @@ def load_model_scaler():
 
 def feature_engineering(df_input):
     """Same feature engineering as training - operating on a local copy"""
-    df = df_input.copy()  # Protect original data from mutation
+    df = df_input.copy()  
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     user_groups = df.groupby('user')
     
@@ -52,38 +52,8 @@ def feature_engineering(df_input):
     features = features.drop(columns=['first_event', 'last_event']).fillna(0)
     return features
 
-def generate_example_csv():
-    data = {
-        "user": ["user1", "user1", "user2", "user2", "user3"],
-        "timestamp": [
-            "2025-10-01 08:45:00",
-            "2025-10-01 09:15:00",
-            "2025-10-02 10:00:00",
-            "2025-10-02 11:30:00",
-            "2025-10-03 09:00:00"
-        ],
-        "login_result": ["Success", "Failure", "Success", "Failure", "Success"],
-        "mfa_used": ["Yes", "No", "Yes", "No", "Yes"],
-        "source_ip": ["192.168.1.1", "192.168.1.2", "10.0.0.1", "10.0.0.1", "172.16.0.5"],
-        "user_agent": ["Chrome", "Chrome", "Firefox", "Firefox", "Safari"],
-        "region": ["US", "US", "EU", "EU", "APAC"]
-    }
-    df = pd.DataFrame(data)
-    return df.to_csv(index=False)
-
 def main():
     st.title("🔍 Fake User Detection in Cloud Activities")
-    
-    st.markdown("## Example CSV Template")
-    st.markdown(
-        "Download this example CSV to structure your input data correctly (columns and sample values)."
-    )
-    st.download_button(
-        label="📄 Download Example CSV",
-        data=generate_example_csv(),
-        file_name="example_fake_user_data.csv",
-        mime="text/csv"
-    )
     
     # Load model and scaler
     model, scaler = load_model_scaler()
@@ -92,28 +62,32 @@ def main():
     
     st.success("✅ Model loaded successfully!")
     
-    uploaded_file = st.file_uploader("Choose CSV file with cloud activity logs", type=["csv"])
+    uploaded_file = st.file_uploader("Choose CSV file with cloud activity logs", type=["csv", "txt"])
     
     if uploaded_file is not None:
         try:
-            # Fixed session state caching using strict deep reference separation (.copy())
-            if "df_data" not in st.session_state:
-                df_raw = pd.read_csv(uploaded_file)
-                st.session_state.df_data = df_raw.copy()
-                df = df_raw.copy()
+            # Defined required columns
+            required_cols = ['user', 'timestamp', 'login_result', 'mfa_used', 'source_ip', 'user_agent', 'region']
+            
+            # Read first line to check headers
+            df_check = pd.read_csv(uploaded_file, nrows=2)
+            uploaded_file.seek(0) # Reset file pointer
+            
+            # Smart Header Auto-Fixer Logic
+            has_matching_headers = all(col in df_check.columns for col in required_cols)
+            
+            if not has_matching_headers:
+                st.warning("⚠️ Column headers missing or mismatched! Automatically applying required schema layout...")
+                # Load with manually assigned names if the file has no valid header row
+                df_raw = pd.read_csv(uploaded_file, names=required_cols, header=None)
             else:
-                df = st.session_state.df_data.copy()
+                df_raw = pd.read_csv(uploaded_file)
+                
+            st.session_state.df_data = df_raw.copy()
+            df = df_raw.copy()
             
             st.subheader("Data Preview")
             st.dataframe(df.head())
-            
-            # Validate required columns
-            required_cols = ['user', 'timestamp', 'login_result', 'mfa_used', 'source_ip', 'user_agent', 'region']
-            missing_cols = [col for col in required_cols if col not in df.columns]
-            
-            if missing_cols:
-                st.error(f"Missing required columns: {missing_cols}")
-                st.stop()
             
             # Data exploration
             st.subheader("Data Exploration")
